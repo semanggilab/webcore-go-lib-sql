@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/semanggilab/webcore-go/app/config"
-	"github.com/semanggilab/webcore-go/app/loader"
+	"github.com/webcore-go/webcore/app/config"
+	"github.com/webcore-go/webcore/app/loader"
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
 )

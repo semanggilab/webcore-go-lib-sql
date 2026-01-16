@@ -5,8 +5,8 @@ package sql
 // 	"log/slog"
 // 	"sync"
 
-// 	"github.com/semanggilab/webcore-go/app/config"
-// 	libdb "github.com/semanggilab/webcore-go/app/libs/db"
+// 	"github.com/webcore-go/webcore/app/config"
+// 	libdb "github.com/webcore-go/webcore/app/libs/db"
 // )
 
 // var (

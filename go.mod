@@ -3,7 +3,7 @@ module github.com/webcore-go/lib-sql
 go 1.24.0
 
 require (
-	github.com/semanggilab/webcore-go v0.1.2
+	github.com/webcore-go/webcore v0.0.1
 	gorm.io/gorm v1.30.0
 )
 
