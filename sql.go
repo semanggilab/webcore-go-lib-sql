@@ -11,13 +11,13 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
-	"github.com/webcore-go/webcore/app/config"
-	"github.com/webcore-go/webcore/app/loader"
-	"github.com/webcore-go/webcore/app/logger"
+	"github.com/webcore-go/webcore/infra/config"
+	"github.com/webcore-go/webcore/infra/logger"
+	"github.com/webcore-go/webcore/port"
 )
 
 type SQLDB interface {
-	loader.IDatabase
+	port.IDatabase
 }
 
 // SQLDatabase represents shared database connection using Bun ORM
@@ -100,7 +100,7 @@ func (d *SQLDatabase) GetName() string {
 }
 
 // Count counts records in a table with optional filtering
-func (d *SQLDatabase) Count(ctx context.Context, table string, filter []loader.DbExpression) (int64, error) {
+func (d *SQLDatabase) Count(ctx context.Context, table string, filter []port.DbExpression) (int64, error) {
 	var count int64
 	query := d.DB.NewSelect().ColumnExpr("COUNT(*)").Table(table)
 
@@ -115,7 +115,7 @@ func (d *SQLDatabase) Count(ctx context.Context, table string, filter []loader.D
 }
 
 // Find retrieves records from a table with optional filtering, sorting, and pagination
-func (d *SQLDatabase) Find(ctx context.Context, results any, table string, column []string, filter []loader.DbExpression, sort map[string]int, limit int64, skip int64) error {
+func (d *SQLDatabase) Find(ctx context.Context, results any, table string, column []string, filter []port.DbExpression, sort map[string]int, limit int64, skip int64) error {
 	query := d.DB.NewSelect().Table(table)
 
 	if len(column) > 0 {
@@ -149,7 +149,7 @@ func (d *SQLDatabase) Find(ctx context.Context, results any, table string, colum
 }
 
 // FindOne retrieves a single record from a table
-func (d *SQLDatabase) FindOne(ctx context.Context, result any, table string, column []string, filter []loader.DbExpression, sort map[string]int) error {
+func (d *SQLDatabase) FindOne(ctx context.Context, result any, table string, column []string, filter []port.DbExpression, sort map[string]int) error {
 	query := d.DB.NewSelect().Table(table)
 
 	if len(column) > 0 {
@@ -181,7 +181,7 @@ func (d *SQLDatabase) InsertOne(ctx context.Context, _ string, data any) (any, e
 }
 
 // Update updates records in a table with optional filtering
-func (d *SQLDatabase) Update(ctx context.Context, _ string, filter []loader.DbExpression, data any) (int64, error) {
+func (d *SQLDatabase) Update(ctx context.Context, _ string, filter []port.DbExpression, data any) (int64, error) {
 	query := d.DB.NewUpdate().Model(data)
 
 	buildWhereClause(d.Config.Driver, query.QueryBuilder(), filter, "")
@@ -195,7 +195,7 @@ func (d *SQLDatabase) Update(ctx context.Context, _ string, filter []loader.DbEx
 }
 
 // UpdateOne updates a single record in a table
-func (d *SQLDatabase) UpdateOne(ctx context.Context, _ string, filter []loader.DbExpression, data any) (int64, error) {
+func (d *SQLDatabase) UpdateOne(ctx context.Context, _ string, filter []port.DbExpression, data any) (int64, error) {
 	query := d.DB.NewUpdate().Model(data)
 
 	buildWhereClause(d.Config.Driver, query.QueryBuilder(), filter, "")
@@ -209,7 +209,7 @@ func (d *SQLDatabase) UpdateOne(ctx context.Context, _ string, filter []loader.D
 }
 
 // Delete deletes records from a table with optional filtering
-func (d *SQLDatabase) Delete(ctx context.Context, table string, filter []loader.DbExpression) (int64, error) {
+func (d *SQLDatabase) Delete(ctx context.Context, table string, filter []port.DbExpression) (int64, error) {
 	query := d.DB.NewDelete().Table(table)
 
 	buildWhereClause(d.Config.Driver, query.QueryBuilder(), filter, "")
@@ -223,7 +223,7 @@ func (d *SQLDatabase) Delete(ctx context.Context, table string, filter []loader.
 }
 
 // DeleteOne deletes a single record from a table
-func (d *SQLDatabase) DeleteOne(ctx context.Context, table string, filter []loader.DbExpression) (int64, error) {
+func (d *SQLDatabase) DeleteOne(ctx context.Context, table string, filter []port.DbExpression) (int64, error) {
 	query := d.DB.NewDelete().Table(table)
 
 	buildWhereClause(d.Config.Driver, query.QueryBuilder(), filter, "")
@@ -295,7 +295,7 @@ func BuildDSN(config config.DatabaseConfig) string {
 }
 
 // buildWhereClause converts MongoDB-style filter to SQL WHERE clause
-func buildWhereClause(driver string, builder bun.QueryBuilder, filter []loader.DbExpression, andOr string) bun.QueryBuilder {
+func buildWhereClause(driver string, builder bun.QueryBuilder, filter []port.DbExpression, andOr string) bun.QueryBuilder {
 	if len(filter) == 0 {
 		return builder
 	}
@@ -357,9 +357,9 @@ func buildWhereClause(driver string, builder bun.QueryBuilder, filter []loader.D
 			case "GROUP_OR":
 				ln := len(value.Args)
 				if ln > 0 {
-					conditions := make([]loader.DbExpression, ln)
+					conditions := make([]port.DbExpression, ln)
 					for i, arg := range value.Args {
-						if cond, ok := arg.(loader.DbExpression); ok {
+						if cond, ok := arg.(port.DbExpression); ok {
 							conditions[i] = cond
 						}
 					}
@@ -370,9 +370,9 @@ func buildWhereClause(driver string, builder bun.QueryBuilder, filter []loader.D
 			case "GROUP_AND":
 				ln := len(value.Args)
 				if ln > 0 {
-					conditions := make([]loader.DbExpression, ln)
+					conditions := make([]port.DbExpression, ln)
 					for i, arg := range value.Args {
-						if cond, ok := arg.(loader.DbExpression); ok {
+						if cond, ok := arg.(port.DbExpression); ok {
 							conditions[i] = cond
 						}
 					}
