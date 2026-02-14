@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/uptrace/bun v1.2.16
-	github.com/webcore-go/webcore v0.0.10
+	github.com/webcore-go/webcore v0.0.11
 )
 
 require (
