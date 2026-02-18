@@ -116,7 +116,19 @@ func (d *SQLDatabase) Count(ctx context.Context, table string, filter []port.DbE
 
 // Find retrieves records from a table with optional filtering, sorting, and pagination
 func (d *SQLDatabase) Find(ctx context.Context, results any, table string, column []string, filter []port.DbExpression, sort map[string]int, limit int64, skip int64) error {
-	query := d.DB.NewSelect().Table(table)
+	query := d.DB.NewSelect()
+	tables := strings.Split(table, ",")
+	if tables[0] != "" {
+		query.Table(tables[0])
+	} else {
+		query.Model(results)
+	}
+
+	if len(tables) > 1 {
+		for _, t := range tables[1:] {
+			query.Relation(t)
+		}
+	}
 
 	if len(column) > 0 {
 		query.Column(column...)
@@ -150,7 +162,19 @@ func (d *SQLDatabase) Find(ctx context.Context, results any, table string, colum
 
 // FindOne retrieves a single record from a table
 func (d *SQLDatabase) FindOne(ctx context.Context, result any, table string, column []string, filter []port.DbExpression, sort map[string]int) error {
-	query := d.DB.NewSelect().Table(table)
+	query := d.DB.NewSelect()
+	tables := strings.Split(table, ",")
+	if tables[0] != "" {
+		query.Table(tables[0])
+	} else {
+		query.Model(result)
+	}
+
+	if len(tables) > 1 {
+		for _, t := range tables[1:] {
+			query.Relation(t)
+		}
+	}
 
 	if len(column) > 0 {
 		query.Column(column...)
@@ -239,20 +263,28 @@ func (d *SQLDatabase) DeleteOne(ctx context.Context, table string, filter []port
 // BuildDSN builds a database connection string from configuration
 func BuildDSN(config config.DatabaseConfig) string {
 	var dsn string
+	urischeme := config.Scheme
+	if urischeme == "" {
+		urischeme = config.Driver
+	}
 	switch config.Driver {
 	case "postgres":
-		// dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
-		dsn = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			config.User, config.Password, config.Host, config.Port, config.Name, config.SSLMode)
-		if len(config.Attributes) > 0 {
-			queryParams := url.Values{}
-			for key, value := range config.Attributes {
-				queryParams.Add(key, value)
-			}
-			if len(queryParams) > 0 {
-				dsn += "?" + queryParams.Encode()
-			}
+		// Build base DSN with query parameters
+		queryParams := url.Values{}
+		queryParams.Set("sslmode", config.SSLMode)
+
+		// Add search_path if SchemaName is specified
+		if config.SchemaName != "" {
+			queryParams.Set("search_path", config.SchemaName)
 		}
+
+		// Add additional attributes
+		for key, value := range config.Attributes {
+			queryParams.Add(key, value)
+		}
+
+		dsn = fmt.Sprintf("%s://%s:%s@%s:%d/%s?%s",
+			urischeme, config.User, config.Password, config.Host, config.Port, config.Name, queryParams.Encode())
 	case "mysql":
 		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 			config.User, config.Password, config.Host, config.Port, config.Name)
