@@ -101,14 +101,14 @@ func (d *SQLDatabase) GetName() string {
 	return d.Config.Name
 }
 
-func (d *SQLDatabase) StartMigration(service string, command string, dir string, args []string) error {
+func (d *SQLDatabase) StartMigration(ctx context.Context, service string, command string, dir string, args []string) error {
 	if service != "" {
 		goose.SetTableName("__migration_" + service + "_logs")
 	} else {
 		goose.SetTableName("__migration_webcore_logs")
 	}
 
-	if err := goose.RunContext(d.Context, command, d.DB.DB, dir, args...); err != nil {
+	if err := goose.RunContext(ctx, command, d.DB.DB, dir, args...); err != nil {
 		log.Fatalf("goose run %s: %v", command, err)
 		return err
 	}
